@@ -1,59 +1,119 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-  <title>20Ten Menu</title>
+  <meta charset="UTF-8">
+  <title>20Ten Café Menu</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
+    body { font-family: Arial; padding: 20px; background: #fefefe; }
+    h2, h3 { color: #ff5722; }
+    .section { margin-bottom: 20px; border: 1px solid #ccc; border-radius: 10px; padding: 10px; background: #fff; }
     .item { margin-bottom: 10px; }
+    summary { font-size: 18px; font-weight: bold; cursor: pointer; }
+    input[type="number"] { width: 50px; margin-left: 10px; }
+    button {
+      background: #ff5722;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
-  <h2>Welcome to 20Ten Café</h2>
-  <div id="menu"></div>
-  <button onclick="submitOrder()">Submit Order</button>
+  <h2>🍽️ Welcome to 20Ten Café</h2>
+  <p>Table No: <strong id="tableNumber"></strong></p>
+
+  <form id="orderForm">
+    <!-- Aloo Tikki Burgers -->
+    <details open class="section">
+      <summary>🍔 Aloo Tikki Burgers</summary>
+      <div class="item"><label>Aloo Tikki Burger ₹40 <input type="number" name="Aloo Tikki Burger" data-price="40" value="0"></label></div>
+      <div class="item"><label>Tandoori Aloo Tikki ₹50 <input type="number" name="Tandoori Aloo Tikki" data-price="50" value="0"></label></div>
+      <div class="item"><label>Chipotle Aloo Tikki ₹50 <input type="number" name="Chipotle Aloo Tikki" data-price="50" value="0"></label></div>
+      <div class="item"><label>BBQ Aloo Tikki ₹50 <input type="number" name="BBQ Aloo Tikki" data-price="50" value="0"></label></div>
+    </details>
+
+    <!-- Veg Burgers -->
+    <details class="section">
+      <summary>🍔 Veg Burgers</summary>
+      <div class="item"><label>Veg Burger ₹45 <input type="number" name="Veg Burger" data-price="45" value="0"></label></div>
+      <div class="item"><label>Veg Tandoori Burger ₹55 <input type="number" name="Veg Tandoori Burger" data-price="55" value="0"></label></div>
+      <div class="item"><label>Veg Chipotle Burger ₹55 <input type="number" name="Veg Chipotle Burger" data-price="55" value="0"></label></div>
+      <div class="item"><label>Veg Chili Garlic Burger ₹55 <input type="number" name="Veg Chili Garlic Burger" data-price="55" value="0"></label></div>
+    </details>
+
+    <!-- Fries -->
+    <details class="section">
+      <summary>🍟 Fries</summary>
+      <div class="item"><label>Salted Fries ₹60 <input type="number" name="Salted Fries" data-price="60" value="0"></label></div>
+      <div class="item"><label>Peri Peri Fries ₹70 <input type="number" name="Peri Peri Fries" data-price="70" value="0"></label></div>
+      <div class="item"><label>Cheezy Fries ₹70 <input type="number" name="Cheezy Fries" data-price="70" value="0"></label></div>
+    </details>
+
+    <!-- Extras -->
+    <details class="section">
+      <summary>🧀 Extras</summary>
+      <div class="item"><label>Extra Cheese ₹15 <input type="number" name="Extra Cheese" data-price="15" value="0"></label></div>
+      <div class="item"><label>Extra Cheese Dip ₹15 <input type="number" name="Extra Cheese Dip" data-price="15" value="0"></label></div>
+    </details>
+
+    <!-- Combos -->
+    <details class="section">
+      <summary>🧾 Combos</summary>
+      <div class="item"><label>Aloo Tikki + Fries ₹90 <input type="number" name="Combo: Aloo Tikki + Fries" data-price="90" value="0"></label></div>
+      <div class="item"><label>Veg Burger + Peri Fries ₹100 <input type="number" name="Combo: Veg Burger + Peri Fries" data-price="100" value="0"></label></div>
+    </details>
+
+    <br>
+    <button type="button" onclick="submitOrder()">Submit Order</button>
+  </form>
 
   <script>
     const table = new URLSearchParams(window.location.search).get('table');
-    const menu = [
-      { id: 1, name: "Aloo Tikki Burger", price: 40 },
-      { id: 2, name: "Peri Peri Fries", price: 70 }
-    ];
+    document.getElementById('tableNumber').innerText = table ?? "Not Found";
 
-    const menuDiv = document.getElementById("menu");
-    menu.forEach(item => {
-      menuDiv.innerHTML += `
-        <div class="item">
-          <label>
-            <input type="number" min="0" id="item-\${item.id}" value="0"/>
-            \${item.name} - ₹\${item.price}
-          </label>
-        </div>
-      `;
-    });
+    function submitOrder() {
+      const inputs = document.querySelectorAll('input[type="number"]');
+      const items = [];
+      let total = 0;
 
-    async function submitOrder() {
-      const selected = menu
-        .map(item => {
-          const qty = parseInt(document.getElementById(`item-\${item.id}`).value);
-          return qty > 0 ? { id: item.id, name: item.name, qty, price: item.price } : null;
-        })
-        .filter(Boolean);
-
-      const total = selected.reduce((sum, i) => sum + i.qty * i.price, 0);
-
-      await fetch("http://YOUR_API_URL/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          table: parseInt(table),
-          items: selected,
-          total
-        })
+      inputs.forEach(input => {
+        const qty = parseInt(input.value);
+        if (qty > 0) {
+          const name = input.name;
+          const price = parseInt(input.dataset.price);
+          items.push({ name, qty, price });
+          total += qty * price;
+        }
       });
 
-      alert("Order placed!");
+      if (!table || items.length === 0) {
+        alert("Please select at least one item and ensure QR scanned.");
+        return;
+      }
+
+      const order = {
+        table: parseInt(table),
+        items: items,
+        total: total
+      };
+
+      fetch("http://YOUR_API_URL/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(order)
+      }).then(res => {
+        if (res.ok) {
+          alert("✅ Order placed successfully!");
+          document.getElementById("orderForm").reset();
+        } else {
+          alert("❌ Failed to place order.");
+        }
+      }).catch(() => alert("❌ Error connecting to server."));
     }
   </script>
 </body>
 </html>
+
